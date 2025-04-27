@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: grademate
+    ports:
+      - "3307:3306"  # Expose MySQL on port 3307 on the host machine
+    volumes:
+      - mysql_data:/var/lib/mysql  # This is used for persisting MySQL data
+
+  springboot-app:
+    build: .
+    depends_on:
+      - mysql
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/grademate
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./src/main/webapp/views:/app/src/main/webapp/views  # Mount views folder for JSP files
+
+volumes:
+  mysql_data:
+    driver: local  # Use local volume driver to persist MySQL data on your local machine
