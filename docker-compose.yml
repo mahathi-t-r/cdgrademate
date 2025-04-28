@@ -1,69 +1,32 @@
-pipeline {
-    agent any
+version: '3.8'
 
-    environment {
-        DOCKER_IMAGE = "cdgrademate-pipeline-springboot-app"
-    }
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: grademate
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
 
-    stages {
-        stage('Declarative: Checkout SCM') {
-            steps {
-                // Check out the Git repository
-                checkout scm
-            }
-        }
+  springboot-app:
+    build: .
+    depends_on:
+      - mysql
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/grademate
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./src/main/webapp/views:/app/src/main/webapp/views
 
-        stage('Pull Code') {
-            steps {
-                script {
-                    // Pull the latest code from Git repository
-                    bat 'git pull'
-                }
-            }
-        }
-
-        stage('Build Docker Images') {
-            steps {
-                script {
-                    // Build the Docker image for the springboot app
-                    bat 'docker-compose build'
-                }
-            }
-        }
-
-        stage('Stop and Remove Existing Containers') {
-            steps {
-                script {
-                    // Check if mysql-db container exists and stop it if it does
-                    bat 'docker ps -a -q --filter "name=mysql-db" | xargs -r docker stop {} || true'
-                    // Remove the container if it exists
-                    bat 'docker ps -a -q --filter "name=mysql-db" | xargs -r docker rm -f {} || true'
-                    // Optionally, remove unused volumes and networks (if necessary)
-                    bat 'docker-compose down --volumes --remove-orphans || true'
-                }
-            }
-        }
-
-        stage('Start Containers') {
-            steps {
-                script {
-                    // Start containers using docker-compose
-                    bat 'docker-compose up -d'
-                }
-            }
-        }
-
-        stage('Declarative: Post Actions') {
-            steps {
-                cleanWs()  // Clean workspace after the build process
-            }
-        }
-    }
-
-    post {
-        always {
-            // Clean up the workspace after the job completes
-            cleanWs()
-        }
-    }
-}
+volumes:
+  mysql_data:
+    driver: local
