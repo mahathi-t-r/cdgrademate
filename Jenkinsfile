@@ -23,9 +23,11 @@ pipeline {
         stage('Stop and Remove Existing Containers') {
             steps {
                 script {
-                    bat 'docker ps -a -q --filter "name=mysql-db" | xargs -r docker stop {} || true'
-                    bat 'docker ps -a -q --filter "name=mysql-db" | xargs -r docker rm -f {} || true'
-                    bat 'docker-compose down --volumes --remove-orphans || true'
+                    bat '''
+                        for /f %%i in ('docker ps -a -q --filter "name=mysql-db"') do docker stop %%i
+                        for /f %%i in ('docker ps -a -q --filter "name=mysql-db"') do docker rm -f %%i
+                        docker-compose down --volumes --remove-orphans || exit 0
+                    '''
                 }
             }
         }
