@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Pull Code') {
             steps {
-                git 'https://github.com/mahathi-t-r/cdgrademate.git'
+                git branch: 'master', url: 'https://github.com/mahathi-t-r/cdgrademate.git'
             }
         }
 
