@@ -1,14 +1,16 @@
 pipeline {
     agent any
 
-    environment {
-        // Define any required environment variables here
-    }
-
     stages {
+        stage('Declarative: Checkout SCM') {
+            steps {
+                checkout scm
+            }
+        }
+
         stage('Checkout') {
             steps {
-                echo 'Checking out the code from Git repository...'
+                echo 'Pulling latest code from Git...'
                 checkout scm
             }
         }
@@ -23,18 +25,8 @@ pipeline {
         stage('Build and Deploy with Docker Compose') {
             steps {
                 echo 'Building and running containers using Docker Compose...'
-                // Build and start only the Spring Boot container without affecting MySQL
-                bat "docker-compose up -d --build --no-deps springboot-app"
+                bat 'docker-compose up -d --build --no-deps springboot-app'
             }
-        }
-    }
-
-    post {
-        success {
-            echo 'Pipeline completed successfully!'
-        }
-        failure {
-            echo 'Pipeline failed. Please check the logs for details.'
         }
     }
 }
